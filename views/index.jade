@@ -1,0 +1,270 @@
+extends layout
+
+block content
+  hr
+
+  section
+    h2
+      span.code
+        | Task
+    p Tasks are used throughout the following examples to represent an asynchronous
+      | action.
+    pre.prettyprint.lang-js
+      :code
+        // Here is the source code for the Task class.
+        var Task = function () {
+          // A randomly assigned duration between 0 - 3 seconds.
+          this.duration = Math.random() * 3000;
+        }
+
+        Task.prototype.run = function (callback) {
+          setTimeout(callback, this.duration);
+        };
+
+        // And an example of how it is used.
+        var task = new Task();
+
+        task.run(function () {
+          alert('task is complete!');
+        });
+
+  hr
+
+  //
+  // async.each
+  //
+
+  a(name="async.each")
+  section
+    h2
+      span.code
+        | async.each(arr, iterator, callback)
+    p Executes an asynchronous function for every item in an array. Functions are executed in parallel.
+    pre.prettyprint.lang-js
+      :code
+        var tasks = [
+          new Task(),
+          new Task(),
+          new Task()
+        ];
+
+        var doTask = function (task, callback) {
+          task.run(callback);
+        };
+
+        async.each(tasks, doTask, function (err) {
+          alert('done!');
+        });
+
+    a.example.one Run Example
+    div.example#one
+      script.
+        var exampleOne = new Example('#one', 3);
+
+        $('a.example.one').click(function () {
+          var doTask = function (task, callback) {
+            task.run(callback);
+          };
+
+          async.each(exampleOne.tasks, doTask, function (err) {
+            alert('done!');
+          });
+        });
+
+  hr
+
+  //
+  // async.eachSeries
+  //
+
+  a(name="async.eachSeries")
+  section
+    h2
+      span.code
+        | async.eachSeries(arr, iterator, callback)
+    pre.prettyprint.lang-js
+      :code
+        var tasks = [
+          new Task(),
+          new Task(),
+          new Task()
+        ];
+
+        var doTask = function (task, callback) {
+          task.run(callback);
+        };
+
+        async.eachSeries(tasks, doTask, function (err) {
+          alert('done!');
+        });
+
+    a.example.two Run Example
+    div.example#two
+      script.
+        var exampleTwo = new Example('#two', 3);
+
+        $('a.example.two').click(function () {
+          var doTask = function (task, callback) {
+            task.run(callback);
+          };
+
+          async.eachSeries(exampleTwo.tasks, doTask, function (err) {
+            alert('done!');
+          });
+        });
+
+  hr
+
+  //
+  // async.eachLimit
+  //
+
+  a(name="async.eachLimit")
+  section
+    h2
+      span.code
+        | async.eachLimit(arr, iterator, callback)
+    pre.prettyprint.lang-js
+      :code
+        var tasks = [
+          new Task(),
+          new Task(),
+          new Task(),
+          new Task()
+        ];
+
+        var doTask = function (task, callback) {
+          task.run(callback);
+        };
+
+        async.eachLimit(tasks, 2, doTask, function (err) {
+          alert('done!');
+        });
+
+    a.example.three Run Example
+    div.example#three
+      script.
+        var exampleThree = new Example('#three', 4);
+
+        $('a.example.three').click(function () {
+          var doTask = function (task, callback) {
+            task.run(callback);
+          };
+
+          async.eachLimit(exampleThree.tasks, 2, doTask, function (err) {
+            alert('done!');
+          });
+        });
+  hr
+
+  a(name="async.map")
+  section
+    h2 async.map
+    pre.prettyprint.lang-js
+      :code
+        var domains = [
+          'google.com',
+          'yahoo.com',
+          'ask.com',
+          'msn.com',
+          'zombo.com',
+          'reddit.com',
+          'myspace.com',
+          'facebook.com'
+        ];
+
+        var domainLookup = function (domain, callback) {
+          $.getJSON('/lookup/' + domain)
+            .done(function (response) {
+              callback(response.error || null, response.address);
+            })
+            .fail(callback);
+        };
+
+        async.map(domains, domainLookup, function (err, addresses) {
+          alert('done!');
+        });
+
+    a.example.four Run Example
+    div.example#four
+      script.
+        var domains = [
+          new CustomTask('google.com'),
+          new CustomTask('yahoo.com'),
+          new CustomTask('ask.com'),
+          new CustomTask('msn.com'),
+          new CustomTask('zombo.com'),
+          new CustomTask('reddit.com'),
+          new CustomTask('myspace.com'),
+          new CustomTask('facebook.com')
+        ];
+
+        var exampleFour = new Example('#four', domains)
+
+        var domainLookup = function (task, callback) {
+          task.trigger('start');
+
+          $.getJSON('/lookup/' + task.val)
+            .done(function (response) {
+              task.trigger('end');
+              task.elem.text(response.address);
+              callback(response.error || null, response.address);
+            })
+            .fail(function (err) {
+              task.trigger('end');
+              callback(err);
+            });
+        };
+
+        $('a.example.four').click(function () {
+          async.map(exampleFour.tasks, domainLookup, function (err, addresses) {
+            alert('done!');
+          });
+        });
+
+  hr
+
+  section
+    h2 A fun little exercise
+    p Mimic the basic functionality of Apache Bench.
+    pre.prettyprint.lang-js
+      :code
+        var async = require('async');
+        var http = require('http');
+
+        // Get command line arguments;
+        var argv = require('optimist').demand(['n', 'c']).argv;
+
+        // Initialize results array.
+        var results = [];
+
+        // Create the queue.
+        var queue = async.queue(function (index, callback) {
+          // Mark the start of the request.
+          var start = new Date();
+
+          http.get(argv._[0], function () {
+            // Save the request time.
+            results.push(new Date() - start);
+            // Let the queue know this task is finished.
+            callback();
+          });
+        }, argv.c);
+
+        // Add items to the queue.
+        for (var x = 0; x < argv.n; x++) {
+          queue.push(x);
+        }
+
+        // When the queue is empty, this callback will run.
+        queue.drain = function () {
+          // Sum all the request times.
+          var total = results.reduce(function (memo, num) {
+            return memo + num;
+          }, 0);
+
+          // Display the average.
+          console.log('Average request time:', total / results.length, '[ms]');
+        };
+
+

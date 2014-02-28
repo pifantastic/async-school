@@ -1,0 +1,22 @@
+doctype 5
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/stylesheets/vendor/topcoat-desktop-light.css')
+    link(rel='stylesheet', href='/stylesheets/vendor/prettify.css')
+    link(rel='stylesheet', href='/stylesheets/vendor/sunburst.css')
+    link(rel='stylesheet', href='/stylesheets/school.css')
+    script(src='/javascripts/vendor/prettify.js')
+    script(src='/javascripts/vendor/jquery.js')
+    script(src='/javascripts/vendor/underscore.js')
+    script(src='/javascripts/vendor/backbone.js')
+    script(src='/javascripts/vendor/async.js')
+    script(src='/javascripts/school.js')
+  body
+    div#container
+      header
+        h1 Async School
+      block content
+
+    script.
+      prettyPrint();
